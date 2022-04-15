@@ -5,7 +5,7 @@
 # ################################
 
 # Seed needs to be set at top of yaml, before objects with parameters are made
-seed: 1000
+seed: 1001
 __set_seed: !apply:torch.manual_seed [!ref <seed>]
 root: !PLACEHOLDER
 output_folder: !ref <root>/trainings/wav2vec2_fine_tune_960/<seed>
@@ -40,8 +40,8 @@ dataset_prepare_fct: !name:robust_speech.data.librispeech.prepare_librispeech
 dataio_prepare_fct: !name:robust_speech.data.librispeech.dataio_prepare
 
 # Training parameters
-number_of_epochs: 60
-lr: 0.9
+number_of_epochs: 1
+lr: 0.001
 lr_wav2vec: 0.0001
 sorting: random
 auto_mix_prec: False
@@ -95,11 +95,11 @@ enc: !new:speechbrain.lobes.models.VanillaNN.VanillaNN
    dnn_blocks: !ref <dnn_layers>
    dnn_neurons: !ref <dnn_neurons>
 
-wav2vec2: !new:speechbrain.lobes.models.huggingface_wav2vec.HuggingFaceWav2Vec2
-   source: !ref <wav2vec2_hub>
+wav2vec2: !new:speechbrain.lobes.models.fairseq_wav2vec.FairseqWav2Vec2
+   pretrained_path: !ref <wav2vec2_hub>
    output_norm: True
    freeze: !ref <freeze_wav2vec>
-   save_path: !ref <save_folder>/wav2vec2_checkpoint
+   save_path: !ref <save_folder>/fairseq_checkpoint.pt
 
 #####
 # Uncomment this block if you prefer to use a Fairseq pretrained model instead
@@ -133,15 +133,11 @@ model: !new:torch.nn.ModuleList
 
 tokenizer: !new:speechbrain.dataio.encoder.CTCTextEncoder
 
-opt_class: null
-
-model_opt_class: !name:torch.optim.Adadelta
+opt_class: !name:torch.optim.Adam
    lr: !ref <lr>
-   rho: 0.95
    eps: 1.e-8
+   betas: !!python/tuple [0.9, 0.98]
 
-wav2vec_opt_class: !name:torch.optim.Adam
-   lr: !ref <lr_wav2vec>
 
 lr_annealing_model: !new:speechbrain.nnet.schedulers.NewBobScheduler
    initial_value: !ref <lr>
@@ -149,12 +145,9 @@ lr_annealing_model: !new:speechbrain.nnet.schedulers.NewBobScheduler
    annealing_factor: 0.8
    patient: 0
 
-lr_annealing_wav2vec: !new:speechbrain.nnet.schedulers.NewBobScheduler
-   initial_value: !ref <lr_wav2vec>
-   improvement_threshold: 0.0025
-   annealing_factor: 0.9
-   patient: 0
-
+noam_annealing: !new:speechbrain.nnet.schedulers.NoamScheduler
+    lr_initial: !ref <lr>
+    n_warmup_steps: 2000
 
 checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
    checkpoints_dir: !ref <save_folder>
@@ -162,7 +155,7 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
       wav2vec2: !ref <wav2vec2>
       model: !ref <model>
       scheduler_model: !ref <lr_annealing_model>
-      scheduler_wav2vec: !ref <lr_annealing_wav2vec>
+      #scheduler_wav2vec: !ref <lr_annealing_wav2vec>
       counter: !ref <epoch_counter>
       tokenizer: !ref <tokenizer>
 
