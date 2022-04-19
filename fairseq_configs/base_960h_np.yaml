@@ -20,7 +20,6 @@ dataset:
   max_tokens: 1600000
   skip_invalid_size_inputs_valid_test: true
   valid_subset: dev_clean
-  train_subset: train-100
 
 distributed_training:
   ddp_backend: legacy_ddp
@@ -31,30 +30,33 @@ criterion:
   zero_infinity: true
 
 optimization:
-  max_update: 80000
-  lr: [0.00003]
+  max_epoch: 100
+  clip_norm: 2.0
+  update_freq: [1]
+  lr: [0.00015]
   sentence_avg: true
-  update_freq: [4]
 
 optimizer:
   _name: adam
-  adam_betas: (0.9,0.98)
+  adam_betas: (0.9,0.999)
   adam_eps: 1e-08
+  weight_decay: 0.0
 
 lr_scheduler:
   _name: tri_stage
-  phase_ratio: [0.1, 0.4, 0.5]
-  final_lr_scale: 0.05
+  warmup_steps: 2500
+  hold_steps: 90000
+  decay_steps: 110000
 
 model:
   _name: wav2vec_ctc
   w2v_path: ???
-  apply_mask: true
-  mask_prob: 0.65
-  mask_channel_prob: 0.5
+  apply_mask: False
+  mask_prob: 0.5
+  mask_channel_prob: 0.1
   mask_channel_length: 64
   layerdrop: 0.1
   activation_dropout: 0.1
   feature_grad_mult: 0.0
   freeze_finetune_updates: 0
-  no_pretrained_weights: False
+  no_pretrained_weights: True
