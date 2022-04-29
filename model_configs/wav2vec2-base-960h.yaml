@@ -48,23 +48,11 @@ enc: !new:speechbrain.lobes.models.VanillaNN.VanillaNN
    dnn_blocks: !ref <dnn_layers>
    dnn_neurons: !ref <dnn_neurons>
 
-wav2vec2: !new:robust_speech.models.wav2vec2_fine_tune.AdvHuggingFaceWav2Vec2
+wav2vec2: !new:robust_speech.models.modules.hf_wav2vec2.AdvHuggingFaceWav2Vec2
    source: !ref <wav2vec2_hub>
    output_norm: True
    freeze: !ref <freeze_wav2vec>
    save_path: !ref <save_folder>/wav2vec2_checkpoint
-
-#####
-# Uncomment this block if you prefer to use a Fairseq pretrained model instead
-# of a HuggingFace one. Here, we provide an URL that is obtained from the
-# Fairseq github for the multilingual XLSR.
-#
-#wav2vec2_url: https://dl.fbaipublicfiles.com/fairseq/wav2vec/wav2vec_vox_960h_pl.pt
-#wav2vec2: !new:speechbrain.lobes.models.fairseq_wav2vec.FairseqWav2Vec2
-#    pretrained_path: !ref <wav2vec2_url>
-#    output_norm: True
-#    freeze: False
-#    save_path: !ref <save_folder>/wav2vec2_checkpoint/model.pt
 
 ctc_lin: !new:speechbrain.nnet.linear.Linear
    input_size: !ref <dnn_neurons>

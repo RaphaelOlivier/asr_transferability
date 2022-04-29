@@ -5,7 +5,7 @@
 # ################################
 
 root: !PLACEHOLDER
-model_name: wav2vec2-base-100h
+model_name: wav2vec2-base-10h
 output_folder: !ref <root>/trainings/<model_name>
 wer_file: !ref <output_folder>/wer.txt
 save_folder: !ref <output_folder>
@@ -14,7 +14,7 @@ train_log: !ref <output_folder>/train_log.txt
 pretrained_path: !ref <output_folder>
 
 # URL for the base english wav2vec2 model.
-wav2vec2_hub: facebook/wav2vec2-base-100h
+wav2vec2_hub: !ref <root>/trainings/fairseq/wav2vec_small.pt
 
 sample_rate: 16000
 number_of_epochs: 1
@@ -48,8 +48,8 @@ enc: !new:speechbrain.lobes.models.VanillaNN.VanillaNN
    dnn_blocks: !ref <dnn_layers>
    dnn_neurons: !ref <dnn_neurons>
 
-wav2vec2: !new:robust_speech.models.modules.hf_wav2vec2.AdvHuggingFaceWav2Vec2
-   source: !ref <wav2vec2_hub>
+wav2vec2: !new:speechbrain.lobes.models.fairseq_wav2vec.FairseqWav2Vec2
+   pretrained_path: !ref <wav2vec2_hub>
    output_norm: True
    freeze: !ref <freeze_wav2vec>
    save_path: !ref <save_folder>/wav2vec2_checkpoint
