@@ -8,7 +8,7 @@ tokenizers_folder: !ref <root>/tokenizers
 # and should be changed at the user's discretion
 # -------------------------------------------------------------
 # Attack information
-eps: 1
+eps: 0.05
 nb_iter: 10000
 const: 10
 lr: 0.002
