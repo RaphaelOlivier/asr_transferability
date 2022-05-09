@@ -19,12 +19,12 @@ task:
 
 dataset:
   num_workers: 6
-  max_tokens: 700000
+  max_tokens: 1400000
   skip_invalid_size_inputs_valid_test: true
   valid_subset: dev_clean
 
 distributed_training:
-  distributed_world_size: 1
+  distributed_world_size: 3
   ddp_backend: legacy_ddp
 
 criterion:
