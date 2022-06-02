@@ -1,5 +1,5 @@
 # General information
-seed: 1001
+seed: 1002
 __set_seed: !apply:torch.manual_seed [!ref <seed>]
 root: !PLACEHOLDER
 tokenizers_folder: !ref <root>/tokenizers
@@ -8,10 +8,10 @@ tokenizers_folder: !ref <root>/tokenizers
 # and should be changed at the user's discretion
 # -------------------------------------------------------------
 # Attack information
-eps: 0.05
+eps: 0.04
 nb_iter: 10000
 const: 10
-lr: 0.002
+lr: 0.00003
 target_sentence: ["THIS IS A SENTENCE OF MEDIUM LENGTH THAT WE USE AS TARGET", "A SHORT TARGET SENTENCE", "HERE IS A RATHER LONG TEST STRING THAT WE USE AS TARGET FOR THE LONGEST UTTERANCES IN LIBRISPEECH WHICH CAN CONTAIN DOZENS OF WORDS"]
 attack_class: !name:robust_speech.adversarial.attacks.cw.ASRCarliniWagnerAttack
    targeted: True
@@ -20,10 +20,12 @@ attack_class: !name:robust_speech.adversarial.attacks.cw.ASRCarliniWagnerAttack
    global_max_length: 562480
    initial_rescale: 1.0
    learning_rate: !ref <lr>
+   optimizer: !name:torch.optim.SGD
+      momentum: 0.95
    max_iter: !ref <nb_iter>
    const: !ref <const>
    train_mode_for_backward: True
-   max_num_decrease_eps: 2
+   max_num_decrease_eps: 8
 attack_name: cw
 save_audio: True
 load_audio: True
@@ -56,7 +58,7 @@ log: !ref <output_folder>/log.txt
 save_audio_path: !ref <output_folder>/save
 
 dataset_prepare_fct: !name:robust_speech.data.librispeech.prepare_librispeech
-dataio_prepare_fct: !name:robust_speech.data.librispeech.dataio_prepare
+dataio_prepare_fct: !name:robust_speech.data.dataio.dataio_prepare
 
 # Data files
 data_folder: !ref <root>/data/LibriSpeech # e.g, /localscratch/LibriSpeech
@@ -71,7 +73,7 @@ data_csv_name: test-clean
 test_csv:
    - !ref <data_folder>/csv/<data_csv_name>.csv
 batch_size: 1 # This works for 2x GPUs with 32GB
-avoid_if_longer_than: 24.0
+avoid_if_longer_than: 14.0
 sorting: random
 
 # Feature parameters

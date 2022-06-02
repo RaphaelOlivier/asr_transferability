@@ -41,7 +41,8 @@ class TrfASR(AdvASRBrain):
                 tokens_bos = torch.cat([tokens_bos, tokens_bos], dim=0)
 
         # compute features
-        feats = self.hparams.compute_features(wavs)
+        feats = self.hparams.compute_features(
+            wavs) if self.hparams.compute_features is not None else wavs
         current_epoch = self.hparams.epoch_counter.current
         feats = self.modules.normalize(feats, wav_lens, epoch=current_epoch)
 
@@ -128,6 +129,10 @@ class TrfASR(AdvASRBrain):
                     self.tokenizer.decode_ndim(utt_seq) for utt_seq in hyps
                 ]
                 target_words = [wrd for wrd in batch.wrd]
+                predicted_words = ["".join(s).strip().split(" ")
+                                   for s in predicted_words]
+                target_words = [t.split(" ") for t in target_words]
+
                 if adv:
                     if targeted:
                         self.adv_wer_metric_target.append(
