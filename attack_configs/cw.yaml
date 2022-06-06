@@ -11,8 +11,10 @@ tokenizers_folder: !ref <root>/tokenizers
 eps: 0.04
 nb_iter: 10000
 const: 10
+momentum: 0.95
 lr: 0.00003
 target_sentence: ["THIS IS A SENTENCE OF MEDIUM LENGTH THAT WE USE AS TARGET", "A SHORT TARGET SENTENCE", "HERE IS A RATHER LONG TEST STRING THAT WE USE AS TARGET FOR THE LONGEST UTTERANCES IN LIBRISPEECH WHICH CAN CONTAIN DOZENS OF WORDS"]
+train_mode_for_backward: True
 attack_class: !name:robust_speech.adversarial.attacks.cw.ASRCarliniWagnerAttack
    targeted: True
    decrease_factor_eps: 0.5
@@ -21,10 +23,10 @@ attack_class: !name:robust_speech.adversarial.attacks.cw.ASRCarliniWagnerAttack
    initial_rescale: 1.0
    learning_rate: !ref <lr>
    optimizer: !name:torch.optim.SGD
-      momentum: 0.95
+      momentum: !ref <momentum>
    max_iter: !ref <nb_iter>
    const: !ref <const>
-   train_mode_for_backward: True
+   train_mode_for_backward: !ref <train_mode_for_backward>
    max_num_decrease_eps: 8
 attack_name: cw
 save_audio: True
@@ -33,9 +35,9 @@ load_audio: True
 # Model information
 model_name: wav2vec2-base-960h
 target_brain_class: !name:robust_speech.models.wav2vec2_fine_tune.W2VASR
-target_brain_hparams_file: !ref model_configs/<model_name>.yaml
+target_brain_hparams_file: !ref model_configs/wav2vec2/<model_name>.yaml
 source_model_name: !ref <model_name>
-source_brain_class: !name:robust_speech.models.wav2vec2_fine_tune.W2VASR
+source_brain_class: !ref <target_brain_class>
 source_brain_hparams_file: !ref model_configs/<source_model_name>.yaml
 
 # Tokenizer information (compatible with target and source)
