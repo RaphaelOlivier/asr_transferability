@@ -17,7 +17,8 @@ task:
 
 dataset:
   num_workers: 1
-  max_tokens: 200000
+  max_tokens: 300000
+  max_tokens_valid: 160000
   skip_invalid_size_inputs_valid_test: true
   valid_subset: dev_clean
 
@@ -31,14 +32,14 @@ criterion:
 
 optimization:
   max_epoch: 100
-  clip_norm: 2.0
-  update_freq: [1]
+  #clip_norm: 10.0
+  update_freq: [5]
   lr: [0.00015]
   sentence_avg: true
 
 optimizer:
   _name: adam
-  adam_betas: (0.9,0.999)
+  adam_betas: (0.9,0.98)
   adam_eps: 1e-08
   weight_decay: 0.0
 
