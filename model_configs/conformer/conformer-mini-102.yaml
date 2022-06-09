@@ -1,0 +1,196 @@
+# ############################################################################
+# Model: E2E ASR with Transformer
+# Encoder: Conformer Encoder
+# Decoder: Transformer Decoder + (CTC/ATT joint) beamsearch + RNNLM
+# Tokens: unigram
+# losses: CTC + KLdiv (Label Smoothing loss)
+# Training: Librispeech 960h
+# Authors:  Jianyuan Zhong, Titouan Parcollet, Samuele Cornell
+# ############################################################################
+# Seed needs to be set at top of yaml, before objects with parameters are made
+root: !PLACEHOLDER
+train_seed: 102
+model_name: !ref conformer-mini/<train_seed>
+output_folder: !ref <root>/trainings/<model_name>
+wer_file: !ref <output_folder>/wer.txt
+save_folder: !ref <output_folder>/save
+train_log: !ref <output_folder>/train_log.txt
+
+# Language model (LM) pretraining
+# NB: To avoid mismatch, the speech recognizer must be trained with the same
+# tokenizer used for LM training. Here, we download everything from the
+# speechbrain HuggingFace repository. However, a local path pointing to a
+# directory containing the lm.ckpt and tokenizer.ckpt may also be specified
+# instead. E.g if you want to use your own LM / tokenizer.
+
+pretrained_path: !ref <output_folder>
+
+# stages related parameters
+stage_one_epochs: 30
+lr_adam: 0.0005
+lr_sgd: 0.0000125
+
+number_of_epochs: 15
+ctc_weight: 1.
+epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
+    limit: !ref <number_of_epochs>
+
+train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
+   save_file: !ref <train_log>
+   
+error_rate_computer: !name:speechbrain.utils.metric_stats.ErrorRateStats
+cer_computer: !name:utils.BriefMetric
+   metric: !new:utils.PrefixAccuracyMetric
+    prefix: BUT
+    space: True
+acc_computer: !name:speechbrain.utils.Accuracy.AccuracyStats
+
+loss_reduction: 'batchmean'
+
+# Feature parameters
+sample_rate: 16000
+n_fft: 400
+n_mels: 80
+
+
+####################### Model parameters ###########################
+# Transformer
+d_model: 144
+nhead: 4
+num_encoder_layers: 8
+num_decoder_layers: 1
+d_ffn: 1024
+transformer_dropout: 0.0
+activation: !name:torch.nn.GELU
+output_neurons: 31
+vocab_size: 31
+
+# Outputs
+blank_index: 0
+label_smoothing: 0.0
+pad_index: 0
+bos_index: 1
+eos_index: 2
+unk_index: 0
+
+# Decoding parameters
+min_decode_ratio: 0.0
+max_decode_ratio: 1.0
+valid_search_interval: 1
+valid_beam_size: 1
+test_beam_size: 1
+lm_weight: 0.0
+ctc_weight_decode: 1.0
+
+############################## models ################################
+
+CNN: !new:speechbrain.lobes.models.convolution.ConvolutionFrontEnd
+    input_shape: (8, 10, 80)
+    num_blocks: 2
+    num_layers_per_block: 1
+    out_channels: (64, 32)
+    kernel_sizes: (3, 3)
+    strides: (2, 2)
+    residuals: (False, False)
+
+Transformer: !new:speechbrain.lobes.models.transformer.TransformerASR.TransformerASR # yamllint disable-line rule:line-length
+    input_size: 640
+    tgt_vocab: !ref <output_neurons>
+    d_model: !ref <d_model>
+    nhead: !ref <nhead>
+    num_encoder_layers: !ref <num_encoder_layers>
+    num_decoder_layers: !ref <num_decoder_layers>
+    d_ffn: !ref <d_ffn>
+    dropout: !ref <transformer_dropout>
+    activation: !ref <activation>
+    encoder_module: conformer
+    attention_type: RelPosMHAXL
+    normalize_before: True
+    causal: False
+
+
+tokenizer: !new:speechbrain.dataio.encoder.CTCTextEncoder
+pretrained_tokenizer_path: !ref <root>/trainings/wav2vec2-base-960h
+
+
+ctc_lin: !new:speechbrain.nnet.linear.Linear
+    input_size: !ref <d_model>
+    n_neurons: !ref <output_neurons>
+
+seq_lin: !new:speechbrain.nnet.linear.Linear
+    input_size: !ref <d_model>
+    n_neurons: !ref <output_neurons>
+
+normalize: !new:speechbrain.processing.features.InputNormalization
+    norm_type: global
+    update_until_epoch: 4
+
+model: !new:torch.nn.ModuleList
+    - [!ref <CNN>, !ref <Transformer>, !ref <seq_lin>, !ref <ctc_lin>]
+
+log_softmax: !new:torch.nn.LogSoftmax
+    dim: -1
+
+augmentation: !new:speechbrain.lobes.augment.SpecAugment
+    time_warp: True
+    time_warp_window: 5
+    time_warp_mode: bicubic
+    freq_mask: True
+    n_freq_mask: 2
+    time_mask: True
+    n_time_mask: 2
+    replace_with_zero: False
+    freq_mask_width: 30
+    time_mask_width: 40
+
+speed_perturb: !new:speechbrain.processing.speech_augmentation.SpeedPerturb
+    orig_freq: !ref <sample_rate>
+    speeds: [95, 100, 105]
+
+compute_features: !new:speechbrain.lobes.features.Fbank
+    sample_rate: !ref <sample_rate>
+    n_fft: !ref <n_fft>
+    n_mels: !ref <n_mels>
+
+decoder: !new:robust_speech.models.modules.ctcdecoding.CTCGreedyDecode
+    ctc_lin: !ref <ctc_lin>
+    log_softmax: !ref <log_softmax>
+    blank_index: !ref <blank_index>
+
+valid_search: !ref <decoder>
+test_search: !ref <decoder>
+
+ctc_cost: !name:speechbrain.nnet.losses.ctc_loss
+    blank_index: !ref <blank_index>
+    reduction: !ref <loss_reduction>
+
+seq_cost: !name:speechbrain.nnet.losses.kldiv_loss
+    label_smoothing: !ref <label_smoothing>
+    reduction: !ref <loss_reduction>
+
+noam_annealing: !new:speechbrain.nnet.schedulers.NoamScheduler
+    lr_initial: !ref <lr_adam>
+    n_warmup_steps: 5000
+#    model_size: !ref <d_model>
+modules:
+   normalize: !ref <normalize>
+   compute_features: !ref <compute_features>
+   CNN: !ref <CNN>
+   Transformer: !ref <Transformer>
+   asr_model: !ref <model>
+   ctc_lin: !ref <ctc_lin>
+   seq_lin: !ref <seq_lin>
+# The pretrainer allows a mapping between pretrained files and instances that
+# are declared in the yaml. E.g here, we will download the file lm.ckpt
+# and it will be loaded into "lm" which is pointing to the <lm_model> defined
+# before.
+pretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer
+    loadables:
+      normalize: !ref <normalize>
+      model: !ref <model>
+      tokenizer: !ref <tokenizer>
+    paths:
+      normalize: !ref <pretrained_path>/normalizer.ckpt
+      model: !ref <pretrained_path>/model.ckpt
+      tokenizer: !ref <pretrained_tokenizer_path>/tokenizer.ckpt
+    collect_in: !ref <output_folder>

@@ -16,7 +16,7 @@ load_audio: False
 model_name: asr-conformer-raw
 attack_name: none
 target_brain_class: !name:robust_speech.models.transformer.TrfASR
-target_brain_hparams_file: !ref model_configs/<model_name>.yaml
+target_brain_hparams_file: !ref model_configs/conformer/<model_name>.yaml
 source_model_name: !ref <model_name>
 #source_brain_class: !name:robust_speech.models.wav2vec2_fine_tune.W2VASR
 #source_brain_hparams_file: !ref model_configs/<source_model_name>.yaml
