@@ -38,7 +38,7 @@ target_brain_class: !name:robust_speech.models.wav2vec2_fine_tune.W2VASR
 target_brain_hparams_file: !ref model_configs/wav2vec2/<model_name>.yaml
 source_model_name: !ref <model_name>
 source_brain_class: !ref <target_brain_class>
-source_brain_hparams_file: !ref model_configs/<source_model_name>.yaml
+source_brain_hparams_file: !ref model_configs/wav2vec2/<source_model_name>.yaml
 
 # Tokenizer information (compatible with target and source)
 pretrained_tokenizer_path: !ref <root>/trainings/wav2vec2-base-960h
