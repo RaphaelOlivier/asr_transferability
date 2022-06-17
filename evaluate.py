@@ -116,6 +116,13 @@ def evaluate(hparams_file, run_opts, overrides):
         # instanciating with the source model if there is one.
         # Otherwise, AdvASRBrain will handle instanciating the attacker with
         # the target model.
+        if isinstance(source_brain,rs.adversarial.brain.EnsembleASRBrain):
+            if "source_ref_attack" in hparams:
+                source_brain.ref_attack = hparams["source_ref_attack"]
+            if "source_ref_train" in hparams:
+                source_brain.ref_train = hparams["source_ref_train"]
+            if "source_ref_valid_test" in hparams:
+                source_brain.ref_valid_test = hparams["source_ref_valid_test"]
         attacker = attacker(source_brain)
 
     # Target model initialization
@@ -136,6 +143,7 @@ def evaluate(hparams_file, run_opts, overrides):
     target_brain.logger = hparams["logger"]
     target_brain.hparams.train_logger = hparams["logger"]
 
+    #attacker.other_asr_brain = target_brain
     target = None
     if "target_generator" in hparams:
         target = hparams["target_generator"]
