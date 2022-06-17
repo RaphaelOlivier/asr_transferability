@@ -8,12 +8,25 @@ tokenizers_folder: !ref <root>/tokenizers
 # and should be changed at the user's discretion
 # -------------------------------------------------------------
 # Attack information
+max_decr: 1
 eps: 0.04
-nb_iter: 10000
+nb_iter: 4000
 const: 10
-momentum: 0.95
-lr: 0.00003
-target_sentence: ["THIS IS A SENTENCE OF MEDIUM LENGTH THAT WE USE AS TARGET", "A SHORT TARGET SENTENCE", "HERE IS A RATHER LONG TEST STRING THAT WE USE AS TARGET FOR THE LONGEST UTTERANCES IN LIBRISPEECH WHICH CAN CONTAIN DOZENS OF WORDS"]
+lr: 0.001
+target_sentence:
+   - LET ME SEE HOW CAN I BEGIN
+   - NOW GO I CAN'T KEEP MY EYES OPEN
+   - SO YOU ARE NOT A GRAVE DIGGER THEN
+   - HE HAD HARDLY THE STRENGTH TO STAMMER
+   - WHAT CAN THIS MEAN SHE SAID TO HERSELF
+   - NOT YEARS FOR SHE'S ONLY FIVE AND TWENTY
+   - WHAT DOES NOT A MAN UNDERGO FOR THE SAKE OF A CURE
+   - IT IS EASY ENOUGH WITH THE CHILD YOU WILL CARRY HER OUT
+   - POOR LITTLE MAN SAID THE LADY YOU MISS YOUR MOTHER DON'T YOU
+   - AT LAST THE LITTLE LIEUTENANT COULD BEAR THE ANXIETY NO LONGER
+   - TAKE THE MEAT OF ONE LARGE CRAB SCRAPING OUT ALL OF THE FAT FROM THE SHELL
+   - TIS A STRANGE CHANGE AND I AM VERY SORRY FOR IT BUT I'LL SWEAR I KNOW NOT HOW TO HELP ITcle
+   - THE BOURGEOIS DID NOT CARE MUCH ABOUT BEING BURIED IN THE VAUGIRARD IT HINTED AT POVERTY PERE LACHAISE IF YOU PLEASE
 train_mode_for_backward: True
 attack_class: !name:robust_speech.adversarial.attacks.cw.ASRCarliniWagnerAttack
    targeted: True
@@ -23,11 +36,10 @@ attack_class: !name:robust_speech.adversarial.attacks.cw.ASRCarliniWagnerAttack
    initial_rescale: 1.0
    learning_rate: !ref <lr>
    optimizer: !name:torch.optim.SGD
-      momentum: !ref <momentum>
    max_iter: !ref <nb_iter>
    const: !ref <const>
    train_mode_for_backward: !ref <train_mode_for_backward>
-   max_num_decrease_eps: 8
+   max_num_decrease_eps: !ref <max_decr>
 attack_name: cw
 save_audio: True
 load_audio: True
