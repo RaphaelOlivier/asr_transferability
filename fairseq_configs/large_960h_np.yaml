@@ -6,7 +6,7 @@ common:
   log_interval: 200
 
 checkpoint:
-  no_epoch_checkpoints: true
+  no_epoch_checkpoints: false
   best_checkpoint_metric: wer
 
 task:
@@ -18,6 +18,7 @@ task:
 dataset:
   num_workers: 1
   max_tokens: 500000
+  max_tokens_valid: 600000
   skip_invalid_size_inputs_valid_test: true
   valid_subset: dev_clean
 
