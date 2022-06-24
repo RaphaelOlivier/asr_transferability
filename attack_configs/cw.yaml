@@ -10,7 +10,7 @@ tokenizers_folder: !ref <root>/tokenizers
 # Attack information
 max_decr: 1
 eps: 0.04
-nb_iter: 4000
+nb_iter: 1000
 const: 10
 lr: 0.001
 target_sentence:
