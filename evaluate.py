@@ -116,7 +116,7 @@ def evaluate(hparams_file, run_opts, overrides):
         # instanciating with the source model if there is one.
         # Otherwise, AdvASRBrain will handle instanciating the attacker with
         # the target model.
-        if isinstance(source_brain,rs.adversarial.brain.EnsembleASRBrain):
+        if isinstance(source_brain, rs.adversarial.brain.EnsembleASRBrain):
             if "source_ref_attack" in hparams:
                 source_brain.ref_attack = hparams["source_ref_attack"]
             if "source_ref_train" in hparams:
@@ -132,14 +132,30 @@ def evaluate(hparams_file, run_opts, overrides):
         if hparams["target_brain_hparams_file"]
         else hparams
     )
-    target_brain = read_brains(
-        target_brain_class,
-        target_hparams,
-        attacker=attacker,
-        run_opts=run_opts,
-        overrides={"root": hparams["root"]},
-        tokenizer=tokenizer,
-    )
+    if source_brain is not None and target_hparams == hparams["source_brain_hparams_file"]:
+        # avoid loading the same network twice
+        sc_brain = source_brain
+        sc_class = target_brain_class
+        if isinstance(source_brain, rs.adversarial.brain.EnsembleASRBrain):
+            sc_brain = source_brain.asr_brains[source_brain.ref_valid_test]
+            sc_class = target_brain_class[source_brain.ref_valid_test]
+        target_brain = sc_class(
+            modules=sc_brain.modules,
+            hparams=sc_brain.hparams.__dict__,
+            run_opts=run_opts,
+            checkpointer=None,
+            attacker=attacker,
+        )
+        target_brain.tokenizer = tokenizer
+    else:
+        target_brain = read_brains(
+            target_brain_class,
+            target_hparams,
+            attacker=attacker,
+            run_opts=run_opts,
+            overrides={"root": hparams["root"]},
+            tokenizer=tokenizer,
+        )
     target_brain.logger = hparams["logger"]
     target_brain.hparams.train_logger = hparams["logger"]
 
