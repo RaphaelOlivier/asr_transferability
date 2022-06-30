@@ -33,7 +33,7 @@ criterion:
 optimization:
   max_epoch: 100
   clip_norm: 5.0
-  update_freq: [2]
+  update_freq: [4]
   lr: [0.00005]
   sentence_avg: true
 
@@ -45,9 +45,9 @@ optimizer:
 
 lr_scheduler:
   _name: tri_stage
-  warmup_steps: 25000
-  hold_steps: 900000
-  decay_steps: 1100000
+  warmup_steps: 50000
+  hold_steps: 350000
+  decay_steps: 500000
 
 model:
   _name: wav2vec_ctc
