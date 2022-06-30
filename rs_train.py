@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Training script for robust-speech models.
 It handles adversarial training using the hparams.attacker object,
@@ -128,5 +129,5 @@ if __name__ == "__main__":
     # If distributed_launch=True then
     # create ddp_group with the right communication protocol
     sb.utils.distributed.ddp_init_group(run_opts)
-    
+
     train(hparams_file, run_opts, overrides)
