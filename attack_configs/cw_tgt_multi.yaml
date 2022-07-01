@@ -25,7 +25,7 @@ target_sentence:
    - POOR LITTLE MAN SAID THE LADY YOU MISS YOUR MOTHER DON'T YOU
    - AT LAST THE LITTLE LIEUTENANT COULD BEAR THE ANXIETY NO LONGER
    - TAKE THE MEAT OF ONE LARGE CRAB SCRAPING OUT ALL OF THE FAT FROM THE SHELL
-   - TIS A STRANGE CHANGE AND I AM VERY SORRY FOR IT BUT I'LL SWEAR I KNOW NOT HOW TO HELP ITcle
+   - TIS A STRANGE CHANGE AND I AM VERY SORRY FOR IT BUT I'LL SWEAR I KNOW NOT HOW TO HELP IT
    - THE BOURGEOIS DID NOT CARE MUCH ABOUT BEING BURIED IN THE VAUGIRARD IT HINTED AT POVERTY PERE LACHAISE IF YOU PLEASE
 train_mode_for_backward: True
 attack_class: !name:robust_speech.adversarial.attacks.cw.ASRCarliniWagnerAttack
@@ -48,7 +48,7 @@ load_audio: True
 model_name: data2vec-base-960h
 model_class: !name:robust_speech.models.wav2vec2_fine_tune.W2VASR
 source_model_name1: hubert-large-960h
-source_model_name2: wav2vec2-large-960h
+source_model_name2: wav2vec2-large-960h-lv60-self
 source_model_name3: data2vec-base-960h
 source_brain_class: 
    - [!ref <model_class>, !ref <model_class>]
