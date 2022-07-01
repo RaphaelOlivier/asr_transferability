@@ -73,17 +73,18 @@ modules:
    ctc_lin: !ref <ctc_lin>
 
 model: !new:torch.nn.ModuleList
+   - [!ref <wav2vec2>, !ref <enc>, !ref <ctc_lin>]
+
+asr_model: !new:torch.nn.ModuleList
    - [!ref <enc>, !ref <ctc_lin>]
 
 tokenizer: !new:speechbrain.dataio.encoder.CTCTextEncoder
 
 pretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer
     loadables:
-      wav2vec2: !ref <wav2vec2>
       model: !ref <model>
       tokenizer: !ref <tokenizer>
     paths:
-      wav2vec2: !ref <pretrained_path>/wav2vec2.ckpt
       model: !ref <pretrained_path>/model.ckpt
       tokenizer: !ref <pretrained_path>/tokenizer.ckpt
     collect_in: !ref <output_folder>
