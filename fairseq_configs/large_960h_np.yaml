@@ -34,7 +34,7 @@ optimization:
   max_epoch: 100
   clip_norm: 5.0
   update_freq: [4]
-  lr: [0.00005]
+  lr: [0.00001]
   sentence_avg: true
 
 optimizer:
