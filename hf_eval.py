@@ -105,10 +105,8 @@ if __name__ == "__main__":
     if model_name not in MODELS:
         raise ValueError("models available: %s" % str(MODELS.keys()))
 
-    ds_nat_txt = load_dataset("librispeech_asr_adversarial",
-                              "adv", split=dataset_split+"_nat_txt", use_auth_token="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")
-    ds_adv_txt = load_dataset("librispeech_asr_adversarial",
-                              "adv", split=dataset_split+"_adv_txt", use_auth_token="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")
+    ds = load_dataset("librispeech_asr_adversarial",
+                      "adv", split=dataset_split)
 
     model_path = MODELS[model_name]["model_path"]
     model = MODELS[model_name]["model_class"].from_pretrained(
@@ -125,9 +123,9 @@ if __name__ == "__main__":
         pred_fn = map_to_pred_wav2vec_lm(processor, model)
     print("Using model %s and split %s" % (model_name, dataset_split))
 
-    result = ds_nat_txt.map(pred_fn, batched=True,
-                            batch_size=1, remove_columns=["audio"])
+    result = ds.map(pred_fn, batched=True,
+                    batch_size=1, remove_columns=["audio"])
     print("WER on true labels:", wer(
-        ds_nat_txt["text"], result["transcription"]))
+        result["true_text"], result["transcription"]))
     print("WER on adversarial labels:", wer(
-        ds_adv_txt["text"], result["transcription"]))
+        result["target_text"], result["transcription"]))

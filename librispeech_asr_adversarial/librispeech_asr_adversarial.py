@@ -94,11 +94,12 @@ class LibrispeechASR(datasets.GeneratorBasedBuilder):
                 {
                     "file": datasets.Value("string"),
                     "audio": datasets.features.Audio(sampling_rate=16_000),
-                    "text": datasets.Value("string"),
+                    "true_text": datasets.Value("string"),
+                    "target_text": datasets.Value("string"),
                     "id": datasets.Value("string"),
                 }
             ),
-            supervised_keys=("speech", "text"),
+            supervised_keys=("speech", "true_text"),
             homepage=_DL_URL,
             citation=_CITATION,
         )
@@ -109,34 +110,20 @@ class LibrispeechASR(datasets.GeneratorBasedBuilder):
             _DL_URLS[self.config.name])
 
         return [
-            datasets.SplitGenerator(name="natural_nat_txt", gen_kwargs={
-                                    "archive_path": archive_path["test"], "split_name": f"natural_nat_txt"}),
-            datasets.SplitGenerator(name="adv_0.04_nat_txt", gen_kwargs={
-                                    "archive_path": archive_path["test"], "split_name": f"adv_0.04_nat_txt"}),
-            datasets.SplitGenerator(name="adv_0.015_nat_txt", gen_kwargs={
-                                    "archive_path": archive_path["test"], "split_name": f"adv_0.015_nat_txt"}),
-            datasets.SplitGenerator(name="adv_0.015_RIR_nat_txt", gen_kwargs={
-                                    "archive_path": archive_path["test"], "split_name": f"adv_0.015_RIR_nat_txt"}),
-            datasets.SplitGenerator(name="natural_adv_txt", gen_kwargs={
-                                    "archive_path": archive_path["test"], "split_name": f"natural_adv_txt"}),
-            datasets.SplitGenerator(name="adv_0.04_adv_txt", gen_kwargs={
-                                    "archive_path": archive_path["test"], "split_name": f"adv_0.04_adv_txt"}),
-            datasets.SplitGenerator(name="adv_0.015_adv_txt", gen_kwargs={
-                                    "archive_path": archive_path["test"], "split_name": f"adv_0.015_adv_txt"}),
-            datasets.SplitGenerator(name="adv_0.015_RIR_adv_txt", gen_kwargs={
-                                    "archive_path": archive_path["test"], "split_name": f"adv_0.015_RIR_adv_txt"}),
+            datasets.SplitGenerator(name="natural", gen_kwargs={
+                                    "archive_path": archive_path["test"], "split_name": f"natural"}),
+            datasets.SplitGenerator(name="adv_0.04", gen_kwargs={
+                                    "archive_path": archive_path["test"], "split_name": f"adv_0.04"}),
+            datasets.SplitGenerator(name="adv_0.015", gen_kwargs={
+                                    "archive_path": archive_path["test"], "split_name": f"adv_0.015"}),
+            datasets.SplitGenerator(name="adv_0.015_RIR", gen_kwargs={
+                                    "archive_path": archive_path["test"], "split_name": f"adv_0.015_RIR"}),
         ]
 
     def _generate_examples(self, archive_path, split_name):
         """Generate examples from a Librispeech archive_path."""
         transcript_file = os.path.join(archive_path, "manifest.txt")
-        if split_name.endswith("_adv_txt"):
-            split_folder = split_name[: -8]
-            use_adv_transcript = True
-        else:
-            assert split_name.endswith("_nat_txt")
-            split_folder = split_name[: -8]
-            use_adv_transcript = False
+        split_folder = split_name
 
         path = os.path.dirname(transcript_file)
         audio_path = os.path.join(path, split_folder)
@@ -144,7 +131,6 @@ class LibrispeechASR(datasets.GeneratorBasedBuilder):
             for line in f:
                 line = line.strip()
                 key, og_transcript, adv_transcript = line.split(",", 2)
-                transcript = adv_transcript if use_adv_transcript else og_transcript
                 suffix = "nat" if split_folder == "natural" else "adv"
                 audio_file = f"{key}_{suffix}.wav"
                 split_key = key+"_"+suffix+"_"+split_name
@@ -152,6 +138,7 @@ class LibrispeechASR(datasets.GeneratorBasedBuilder):
                     "id": split_key,
                     "file": os.path.join(audio_path, audio_file),
                     "audio": os.path.join(audio_path, audio_file),
-                    "text": transcript,
+                    "true_text": og_transcript,
+                    "target_text": adv_transcript,
                 }
                 yield split_key, example
