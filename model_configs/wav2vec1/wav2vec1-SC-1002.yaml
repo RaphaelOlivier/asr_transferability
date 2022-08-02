@@ -1,0 +1,89 @@
+# ################################
+# Model: wav2vec2 + DNN + CTC
+# Augmentation: SpecAugment
+# Authors: Sung-Lin Yeh 2021
+# ################################
+
+root: !PLACEHOLDER
+model_seed: 1002
+model_name: !ref wav2vec1-SC-<model_seed>
+output_folder: !ref <root>/trainings/wav2vec1-SC/<model_seed>
+wer_file: !ref <output_folder>/wer.txt
+save_folder: !ref <output_folder>
+train_log: !ref <output_folder>/train_log.txt
+
+pretrained_path: !ref <output_folder>
+
+# URL for the base english wav2vec2 model.
+
+sample_rate: 16000
+number_of_epochs: 1
+# Model parameters
+activation: !name:torch.nn.LeakyReLU
+dnn_layers: 2
+dnn_neurons: 512
+freeze_wav2vec: True
+dropout: null
+
+# Outputs
+output_neurons: 31  # BPE size, index(blank/eos/bos) = 0
+wav2vec1_path: !ref <output_folder>/fairseq_checkpoint.pt
+# Decoding parameters
+blank_index: 0
+bos_index: 1
+eos_index: 2
+
+#
+# Functions and classes
+#
+epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
+   limit: !ref <number_of_epochs>
+
+enc: !new:speechbrain.lobes.models.VanillaNN.VanillaNN
+   input_shape: [null, null, !ref <dnn_neurons>]
+   activation: !ref <activation>
+   dnn_blocks: !ref <dnn_layers>
+   dnn_neurons: !ref <dnn_neurons>
+
+wav2vec2: !new:speechbrain.lobes.models.fairseq_wav2vec.FairseqWav2Vec1
+   pretrained_path: !ref <wav2vec1_path>
+   output_norm: False
+   freeze: !ref <freeze_wav2vec>
+   save_path: !ref <save_folder>/wav2vec1_checkpoint.pt
+
+ctc_lin: !new:speechbrain.nnet.linear.Linear
+   input_size: !ref <dnn_neurons>
+   n_neurons: !ref <output_neurons>
+
+log_softmax: !new:speechbrain.nnet.activations.Softmax
+   apply_log: True
+
+ctc_cost: !name:speechbrain.nnet.losses.ctc_loss
+   blank_index: !ref <blank_index>
+
+modules:
+   wav2vec2: !ref <wav2vec2>
+   enc: !ref <enc>
+   ctc_lin: !ref <ctc_lin>
+
+model: !new:torch.nn.ModuleList
+   - [!ref <enc>, !ref <ctc_lin>, !ref <wav2vec2>]
+
+tokenizer: !new:speechbrain.dataio.encoder.CTCTextEncoder
+
+train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
+   save_file: !ref <train_log>
+
+error_rate_computer: !name:speechbrain.utils.metric_stats.ErrorRateStats
+
+cer_computer: !name:speechbrain.utils.metric_stats.ErrorRateStats
+   split_tokens: True
+
+pretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer
+    loadables:
+      model: !ref <model>
+      tokenizer: !ref <tokenizer>
+    paths:
+      model: !ref <pretrained_path>/model.ckpt
+      tokenizer: !ref <pretrained_path>/tokenizer.ckpt
+    collect_in: !ref <output_folder>
