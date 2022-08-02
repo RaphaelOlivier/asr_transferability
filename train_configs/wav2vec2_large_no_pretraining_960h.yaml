@@ -5,7 +5,7 @@
 # ################################
 
 # Seed needs to be set at top of yaml, before objects with parameters are made
-seed: 1011
+seed: 1013
 __set_seed: !apply:torch.manual_seed [!ref <seed>]
 root: !PLACEHOLDER
 output_folder: !ref <root>/trainings/wav2vec2_large_no_pretraining_960/<seed>
@@ -16,7 +16,7 @@ train_log: !ref <output_folder>/train_log.txt
 attack_class: null
 
 # URL for the base english wav2vec2 model.
-wav2vec2_hub: facebook/wav2vec2-large-960h
+wav2vec2_hub: !ref <root>/trainings/fairseq/wav2vec2_large_960_np/
 pretrained_tokenizer_path: !ref <root>/trainings/wav2vec2-base-960h
 # Data files
 data_folder: !ref <root>/data/LibriSpeech # e.g, /localscratch/LibriSpeech
@@ -70,7 +70,7 @@ test_dataloader_opts:
 activation: !name:torch.nn.LeakyReLU
 dnn_layers: 2
 dnn_neurons: 1024
-freeze_wav2vec: False
+freeze_wav2vec: True
 
 # Outputs
 output_neurons: 31  # BPE size, index(blank/eos/bos) = 0
@@ -96,12 +96,11 @@ enc: !new:speechbrain.lobes.models.VanillaNN.VanillaNN
    dnn_blocks: !ref <dnn_layers>
    dnn_neurons: !ref <dnn_neurons>
 
-wav2vec2: !new:robust_speech.models.modules.hf_wav2vec2.AdvHuggingFaceWav2Vec2
-   source: !ref <wav2vec2_hub>
+wav2vec2: !new:speechbrain.lobes.models.fairseq_wav2vec.FairseqWav2Vec2
+   pretrained_path: !ref <wav2vec2_hub>/checkpoint_best.pt
    output_norm: True
    freeze: !ref <freeze_wav2vec>
-   save_path: !ref <save_folder>/wav2vec2_checkpoint.pt
-   load_pretrained_weights: False
+   save_path: !ref <save_folder>/fairseq_checkpoint.pt
 
 #####
 # Uncomment this block if you prefer to use a Fairseq pretrained model instead

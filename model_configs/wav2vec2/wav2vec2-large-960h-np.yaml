@@ -14,7 +14,7 @@ train_log: !ref <output_folder>/train_log.txt
 pretrained_path: !ref <output_folder>
 
 # URL for the base english wav2vec2 model.
-wav2vec2_hub: !ref <root>/trainings/fairseq/<model_name>/checkpoint_best.pt
+wav2vec2_hub: !ref <root>/trainings/fairseq/wav2vec2_large_960_np/checkpoint_best.pt
 
 sample_rate: 16000
 number_of_epochs: 1
